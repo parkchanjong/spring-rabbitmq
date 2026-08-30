@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: rabbitmq-notification
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/rabbitmq_notification?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul}
+    username: ${MYSQL_USERNAME:notification}
+    password: ${MYSQL_PASSWORD:notification}
+  jpa:
+    hibernate:
+      ddl-auto: create
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:notification}
+    password: ${RABBITMQ_PASSWORD:notification}
+    virtual-host: ${RABBITMQ_VHOST:/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
