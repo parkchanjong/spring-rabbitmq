@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-@Transactional(readOnly = true)
 public class MemberService {
 
 	private final MemberRepository memberRepository;
@@ -25,10 +24,14 @@ public class MemberService {
 		return toResult(memberRepository.save(Member.create(name)));
 	}
 
+
+	@Transactional(readOnly = true)
 	public List<MemberServiceResult> findAll() {
 		return memberRepository.findAll().stream().map(this::toResult).toList();
 	}
 
+
+	@Transactional(readOnly = true)
 	public MemberServiceResult findById(Long id) {
 		return memberRepository.findById(id)
 				.map(this::toResult)

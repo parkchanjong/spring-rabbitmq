@@ -33,14 +33,14 @@ class MemberControllerTest {
 	private MemberService memberService;
 
 	@Test
-	void createReturnsCreatedMemberAndLocation() throws Exception {
+	void createReturnsOkMember() throws Exception {
 		when(memberService.create("chan")).thenReturn(member(1L, "chan"));
 
 		mockMvc.perform(post("/members")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content("{\"name\": \"chan\"}"))
-				.andExpect(status().isCreated())
-				.andExpect(header().string("Location", "/members/1"))
+				.andExpect(status().isOk())
+				.andExpect(header().doesNotExist("Location"))
 				.andExpect(jsonPath("$.data.id").value(1))
 				.andExpect(jsonPath("$.data.name").value("chan"));
 

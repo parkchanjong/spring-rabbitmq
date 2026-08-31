@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-@Transactional(readOnly = true)
 public class SubscriptionService {
 
 	private final MemberRepository memberRepository;
@@ -43,6 +42,8 @@ public class SubscriptionService {
 				.ifPresent(subscriptionRepository::delete);
 	}
 
+
+	@Transactional(readOnly = true)
 	private Member findMember(Long memberId) {
 		return memberRepository.findById(memberId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found"));

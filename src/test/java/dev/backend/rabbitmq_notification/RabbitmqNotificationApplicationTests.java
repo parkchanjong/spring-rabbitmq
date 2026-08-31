@@ -84,14 +84,13 @@ class RabbitmqNotificationApplicationTests {
 						.content("""
 								{"memberId": %d, "title": "Spring RabbitMQ", "description": "intro"}
 								""".formatted(memberId)))
-				.andExpect(status().isCreated())
+				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.memberId").value(memberId))
 				.andExpect(jsonPath("$.data.viewCount").value(0))
 				.andExpect(jsonPath("$.data.likeCount").value(0))
 				.andReturn();
 		String response = result.getResponse().getContentAsString();
 		long videoId = objectMapper.readTree(response).path("data").path("id").asLong();
-		assertEquals("/videos/" + videoId, result.getResponse().getHeader("Location"));
 
 		mockMvc.perform(get("/videos/{id}", videoId))
 				.andExpect(status().isOk())
@@ -163,13 +162,12 @@ class RabbitmqNotificationApplicationTests {
 		String subscriptionPath = "/members/%d/subscriptions/%d".formatted(subscriberId, creatorId);
 
 		mockMvc.perform(post(subscriptionPath))
-				.andExpect(status().isCreated())
-				.andExpect(header().string("Location", subscriptionPath))
+				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.subscriberId").value(subscriberId))
 				.andExpect(jsonPath("$.data.creatorId").value(creatorId));
 
 		mockMvc.perform(delete(subscriptionPath))
-				.andExpect(status().isNoContent());
+				.andExpect(status().isOk());
 
 		assertTrue(subscriptionRepository.findBySubscriberIdAndCreatorId(subscriberId, creatorId).isEmpty());
 	}
@@ -181,7 +179,7 @@ class RabbitmqNotificationApplicationTests {
 		String subscriptionPath = "/members/%d/subscriptions/%d".formatted(subscriberId, creatorId);
 
 		mockMvc.perform(post(subscriptionPath))
-				.andExpect(status().isCreated());
+				.andExpect(status().isOk());
 
 		mockMvc.perform(post(subscriptionPath))
 				.andExpect(status().isOk())
@@ -191,10 +189,10 @@ class RabbitmqNotificationApplicationTests {
 		assertEquals(1, subscriptionRepository.countBySubscriberIdAndCreatorId(subscriberId, creatorId));
 
 		mockMvc.perform(delete(subscriptionPath))
-				.andExpect(status().isNoContent());
+				.andExpect(status().isOk());
 
 		mockMvc.perform(delete(subscriptionPath))
-				.andExpect(status().isNoContent());
+				.andExpect(status().isOk());
 	}
 
 	@Test
@@ -215,11 +213,10 @@ class RabbitmqNotificationApplicationTests {
 		var result = mockMvc.perform(post("/members")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"name\": \"%s\"}".formatted(name)))
-				.andExpect(status().isCreated())
+				.andExpect(status().isOk())
 				.andReturn();
 		JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
 		long memberId = json.path("data").path("id").asLong();
-		assertEquals("/members/" + memberId, result.getResponse().getHeader("Location"));
 		return memberId;
 	}
 }

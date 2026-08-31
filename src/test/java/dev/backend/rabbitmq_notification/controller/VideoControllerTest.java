@@ -32,14 +32,14 @@ class VideoControllerTest {
 	private VideoService videoService;
 
 	@Test
-	void createReturnsCreatedVideoAndLocation() throws Exception {
+	void createReturnsOkVideo() throws Exception {
 		when(videoService.create(1L, "title", "description")).thenReturn(video(2L));
 
 		mockMvc.perform(post("/videos")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content("{\"memberId\": 1, \"title\": \"title\", \"description\": \"description\"}"))
-				.andExpect(status().isCreated())
-				.andExpect(header().string("Location", "/videos/2"))
+				.andExpect(status().isOk())
+				.andExpect(header().doesNotExist("Location"))
 				.andExpect(jsonPath("$.data.id").value(2))
 				.andExpect(jsonPath("$.data.memberId").value(1))
 				.andExpect(jsonPath("$.data.viewCount").value(0))

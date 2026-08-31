@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-@Transactional(readOnly = true)
 public class VideoService {
 
 	private final MemberRepository memberRepository;
@@ -30,6 +29,8 @@ public class VideoService {
 		return toResult(videoRepository.save(Video.create(member, title, description)));
 	}
 
+
+	@Transactional(readOnly = true)
 	public VideoServiceResult findById(Long id) {
 		return videoRepository.findById(id)
 				.map(this::toResult)

@@ -29,12 +29,12 @@ class SubscriptionControllerTest {
 	private SubscriptionService subscriptionService;
 
 	@Test
-	void subscribeReturnsCreatedResponseAndLocationForNewSubscription() throws Exception {
+	void subscribeReturnsOkForNewSubscription() throws Exception {
 		when(subscriptionService.subscribe(1L, 2L)).thenReturn(new SubscriptionServiceResult(3L, 1L, 2L, true));
 
 		mockMvc.perform(post("/members/{subscriberId}/subscriptions/{creatorId}", 1L, 2L))
-				.andExpect(status().isCreated())
-				.andExpect(header().string("Location", "/members/1/subscriptions/2"))
+				.andExpect(status().isOk())
+				.andExpect(header().doesNotExist("Location"))
 				.andExpect(jsonPath("$.data.id").value(3))
 				.andExpect(jsonPath("$.data.subscriberId").value(1))
 				.andExpect(jsonPath("$.data.creatorId").value(2));
@@ -53,9 +53,9 @@ class SubscriptionControllerTest {
 	}
 
 	@Test
-	void unsubscribeReturnsNoContent() throws Exception {
+	void unsubscribeReturnsOk() throws Exception {
 		mockMvc.perform(delete("/members/{subscriberId}/subscriptions/{creatorId}", 1L, 2L))
-				.andExpect(status().isNoContent());
+				.andExpect(status().isOk());
 
 		verify(subscriptionService).unsubscribe(1L, 2L);
 	}
