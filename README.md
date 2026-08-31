@@ -42,6 +42,17 @@ http://localhost:8080/actuator/prometheus
 
 Prometheus의 Status > Targets에서 `rabbitmq-notification` 대상이 `UP`인지 확인합니다. Grafana는 시작 시 Prometheus 데이터 소스를 자동으로 등록합니다.
 
+## 비디오 생성 흐름
+
+`POST /videos` 요청은 작성자 ID(`memberId`), 제목, 설명을 받습니다. 생성 로직은 다음 순서로 동작합니다.
+
+1. `memberId`로 작성자를 조회하고, 존재하지 않으면 `404 Not Found`를 반환합니다.
+2. 조회한 작성자와 연결된 비디오를 저장합니다.
+3. 저장된 비디오의 ID, 작성자 ID, 제목, 생성 시각을 담은 Outbox 이벤트를 기록합니다.
+4. 비디오 정보와 생성 결과를 응답으로 반환합니다.
+
+비디오와 Outbox 이벤트는 하나의 트랜잭션으로 저장합니다. 따라서 비디오만 저장되고 알림 발행을 위한 이벤트가 누락되는 상황을 방지하며, 커밋된 이벤트는 이후 비동기 알림 처리로 전달됩니다.
+
 ## 비디오 알림 비동기 처리
 
 `POST /videos`는 비디오와 Outbox 이벤트만 같은 트랜잭션으로 저장합니다. 별도 발행기가 RabbitMQ의 `video.events` Exchange로 이벤트를 발행하고, Consumer가 소비 시점의 구독자에게 수신자별 알림 이력을 저장합니다.
