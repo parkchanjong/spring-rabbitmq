@@ -1,9 +1,14 @@
-// Member와 Video API를 MySQL 컨테이너에서 검증하는 통합 테스트.
+// Member, Video, Subscription 동작을 MySQL 컨테이너에서 검증하는 통합 테스트.
 package dev.backend.rabbitmq_notification;
 
+import dev.backend.rabbitmq_notification.domain.Member;
+import dev.backend.rabbitmq_notification.domain.Subscription;
+import dev.backend.rabbitmq_notification.repository.MemberRepository;
+import dev.backend.rabbitmq_notification.repository.SubscriptionRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -15,11 +20,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.hamcrest.Matchers.hasItem;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,6 +44,12 @@ class RabbitmqNotificationApplicationTests {
 
 	@Autowired
 	private ObjectMapper objectMapper;
+
+	@Autowired
+	private MemberRepository memberRepository;
+
+	@Autowired
+	private SubscriptionRepository subscriptionRepository;
 
 	@DynamicPropertySource
 	static void databaseProperties(DynamicPropertyRegistry registry) {
@@ -106,6 +119,36 @@ class RabbitmqNotificationApplicationTests {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"memberId\": 999, \"title\": \"video\"}"))
 				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void subscriptionCanBeCreatedBetweenDifferentMembers() {
+		Member subscriber = memberRepository.save(Member.create("subscriber"));
+		Member creator = memberRepository.save(Member.create("creator"));
+
+		Subscription subscription = subscriptionRepository.saveAndFlush(Subscription.create(subscriber, creator));
+
+		assertEquals(subscriber.getId(), subscription.getSubscriber().getId());
+		assertEquals(creator.getId(), subscription.getCreator().getId());
+	}
+
+	@Test
+	void duplicateSubscriptionIsRejected() {
+		Member subscriber = memberRepository.save(Member.create("subscriber"));
+		Member creator = memberRepository.save(Member.create("creator"));
+		subscriptionRepository.saveAndFlush(Subscription.create(subscriber, creator));
+
+		assertThrows(
+				DataIntegrityViolationException.class,
+				() -> subscriptionRepository.saveAndFlush(Subscription.create(subscriber, creator))
+		);
+	}
+
+	@Test
+	void subscriptionRejectsSelfSubscription() {
+		Member member = Member.create("member");
+
+		assertThrows(IllegalArgumentException.class, () -> Subscription.create(member, member));
 	}
 
 	private long createMember(String name) throws Exception {
