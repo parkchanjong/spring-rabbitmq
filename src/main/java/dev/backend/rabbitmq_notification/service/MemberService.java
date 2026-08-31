@@ -2,6 +2,7 @@
 package dev.backend.rabbitmq_notification.service;
 
 import dev.backend.rabbitmq_notification.domain.Member;
+import dev.backend.rabbitmq_notification.dto.member.MemberServiceResult;
 import dev.backend.rabbitmq_notification.repository.MemberRepository;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -20,16 +21,21 @@ public class MemberService {
 	}
 
 	@Transactional
-	public Member create(String name) {
-		return memberRepository.save(Member.create(name));
+	public MemberServiceResult create(String name) {
+		return toResult(memberRepository.save(Member.create(name)));
 	}
 
-	public List<Member> findAll() {
-		return memberRepository.findAll();
+	public List<MemberServiceResult> findAll() {
+		return memberRepository.findAll().stream().map(this::toResult).toList();
 	}
 
-	public Member findById(Long id) {
+	public MemberServiceResult findById(Long id) {
 		return memberRepository.findById(id)
+				.map(this::toResult)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found"));
+	}
+
+	private MemberServiceResult toResult(Member member) {
+		return new MemberServiceResult(member.getId(), member.getName(), member.getCreatedAt());
 	}
 }
