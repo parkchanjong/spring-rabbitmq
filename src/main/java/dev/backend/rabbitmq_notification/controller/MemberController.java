@@ -1,7 +1,7 @@
 // 회원 생성과 조회 HTTP 요청을 처리하는 Controller.
 package dev.backend.rabbitmq_notification.controller;
 
-import dev.backend.rabbitmq_notification.domain.member.Member;
+import dev.backend.rabbitmq_notification.domain.Member;
 import dev.backend.rabbitmq_notification.service.MemberService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

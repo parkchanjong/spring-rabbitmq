@@ -1,8 +1,8 @@
 // 동영상 생성과 조회 유스케이스를 처리하는 서비스.
 package dev.backend.rabbitmq_notification.service;
 
-import dev.backend.rabbitmq_notification.domain.member.Member;
-import dev.backend.rabbitmq_notification.domain.video.Video;
+import dev.backend.rabbitmq_notification.domain.Member;
+import dev.backend.rabbitmq_notification.domain.Video;
 import dev.backend.rabbitmq_notification.repository.MemberRepository;
 import dev.backend.rabbitmq_notification.repository.VideoRepository;
 import org.springframework.http.HttpStatus;

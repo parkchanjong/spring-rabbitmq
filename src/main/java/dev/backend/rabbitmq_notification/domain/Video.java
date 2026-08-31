@@ -1,7 +1,6 @@
 // 동영상 도메인 엔티티.
-package dev.backend.rabbitmq_notification.domain.video;
+package dev.backend.rabbitmq_notification.domain;
 
-import dev.backend.rabbitmq_notification.domain.member.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

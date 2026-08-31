@@ -1,5 +1,5 @@
 // 회원 도메인 엔티티.
-package dev.backend.rabbitmq_notification.domain.member;
+package dev.backend.rabbitmq_notification.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
