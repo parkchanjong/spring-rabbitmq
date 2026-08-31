@@ -14,6 +14,7 @@ spring:
     username: ${RABBITMQ_USERNAME:notification}
     password: ${RABBITMQ_PASSWORD:notification}
     virtual-host: ${RABBITMQ_VHOST:/}
+    publisher-confirm-type: correlated
 
 management:
   endpoints:
@@ -27,3 +28,7 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+notification:
+  outbox:
+    fixed-delay: ${NOTIFICATION_OUTBOX_FIXED_DELAY:1000}

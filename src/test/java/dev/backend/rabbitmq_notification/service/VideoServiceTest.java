@@ -9,9 +9,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import dev.backend.rabbitmq_notification.domain.Member;
+import dev.backend.rabbitmq_notification.domain.OutboxEvent;
 import dev.backend.rabbitmq_notification.domain.Video;
 import dev.backend.rabbitmq_notification.dto.VideoServiceResult;
 import dev.backend.rabbitmq_notification.repository.MemberRepository;
+import dev.backend.rabbitmq_notification.repository.OutboxEventRepository;
 import dev.backend.rabbitmq_notification.repository.VideoRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -33,6 +35,9 @@ class VideoServiceTest {
 	@Mock
 	private VideoRepository videoRepository;
 
+	@Mock
+	private OutboxEventRepository outboxEventRepository;
+
 	@InjectMocks
 	private VideoService videoService;
 
@@ -47,10 +52,15 @@ class VideoServiceTest {
 		VideoServiceResult result = videoService.create(1L, "title", "description");
 
 		ArgumentCaptor<Video> captor = ArgumentCaptor.forClass(Video.class);
+		ArgumentCaptor<OutboxEvent> outboxCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
 		verify(videoRepository).save(captor.capture());
+		verify(outboxEventRepository).save(outboxCaptor.capture());
 		assertEquals(member, captor.getValue().getMember());
 		assertEquals("title", captor.getValue().getTitle());
 		assertEquals("description", captor.getValue().getDescription());
+		assertEquals(2L, outboxCaptor.getValue().getVideoId());
+		assertEquals(1L, outboxCaptor.getValue().getCreatorId());
+		assertEquals("title", outboxCaptor.getValue().getVideoTitle());
 		assertEquals(new VideoServiceResult(2L, 1L, "title", "description", 0, 0, createdAt), result);
 	}
 

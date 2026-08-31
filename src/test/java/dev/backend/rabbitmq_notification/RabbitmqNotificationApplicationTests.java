@@ -3,7 +3,13 @@ package dev.backend.rabbitmq_notification;
 
 import dev.backend.rabbitmq_notification.domain.Member;
 import dev.backend.rabbitmq_notification.domain.Subscription;
+import dev.backend.rabbitmq_notification.domain.OutboxEvent;
+import dev.backend.rabbitmq_notification.notification.NotificationRabbitConfig;
+import dev.backend.rabbitmq_notification.notification.OutboxEventPublisher;
+import dev.backend.rabbitmq_notification.notification.VideoCreatedEvent;
 import dev.backend.rabbitmq_notification.repository.MemberRepository;
+import dev.backend.rabbitmq_notification.repository.NotificationRepository;
+import dev.backend.rabbitmq_notification.repository.OutboxEventRepository;
 import dev.backend.rabbitmq_notification.repository.SubscriptionRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +20,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -42,6 +51,12 @@ class RabbitmqNotificationApplicationTests {
 			.withUsername("notification")
 			.withPassword("notification");
 
+	@Container
+	static final GenericContainer<?> rabbitmq = new GenericContainer<>(DockerImageName.parse("rabbitmq:4.3.5-management"))
+			.withExposedPorts(5672)
+			.withEnv("RABBITMQ_DEFAULT_USER", "notification")
+			.withEnv("RABBITMQ_DEFAULT_PASS", "notification");
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -54,11 +69,27 @@ class RabbitmqNotificationApplicationTests {
 	@Autowired
 	private SubscriptionRepository subscriptionRepository;
 
+	@Autowired
+	private OutboxEventRepository outboxEventRepository;
+
+	@Autowired
+	private NotificationRepository notificationRepository;
+
+	@Autowired
+	private OutboxEventPublisher outboxEventPublisher;
+
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
+
 	@DynamicPropertySource
 	static void databaseProperties(DynamicPropertyRegistry registry) {
 		registry.add("spring.datasource.url", mysql::getJdbcUrl);
 		registry.add("spring.datasource.username", mysql::getUsername);
 		registry.add("spring.datasource.password", mysql::getPassword);
+		registry.add("spring.rabbitmq.host", rabbitmq::getHost);
+		registry.add("spring.rabbitmq.port", () -> rabbitmq.getMappedPort(5672));
+		registry.add("spring.rabbitmq.username", () -> "notification");
+		registry.add("spring.rabbitmq.password", () -> "notification");
 	}
 
 	@Test
@@ -96,6 +127,48 @@ class RabbitmqNotificationApplicationTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.id").value(videoId))
 				.andExpect(jsonPath("$.data.title").value("Spring RabbitMQ"));
+	}
+
+	@Test
+	void videoCreatedEventCreatesOneNotificationPerSubscriberEvenWhenRedelivered() throws Exception {
+		long creatorId = createMember("creator");
+		long firstSubscriberId = createMember("subscriber-one");
+		long secondSubscriberId = createMember("subscriber-two");
+		subscriptionRepository.saveAndFlush(Subscription.create(
+				memberRepository.getReferenceById(firstSubscriberId),
+				memberRepository.getReferenceById(creatorId)
+		));
+		subscriptionRepository.saveAndFlush(Subscription.create(
+				memberRepository.getReferenceById(secondSubscriberId),
+				memberRepository.getReferenceById(creatorId)
+		));
+
+		mockMvc.perform(post("/videos")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("""
+							{"memberId": %d, "title": "RabbitMQ event", "description": "intro"}
+							""".formatted(creatorId)))
+				.andExpect(status().isOk());
+
+		OutboxEvent outboxEvent = outboxEventRepository.findAll().stream()
+				.filter(event -> event.getCreatorId().equals(creatorId))
+				.findFirst()
+				.orElseThrow();
+		outboxEventPublisher.publishPending();
+		awaitNotificationCount(outboxEvent.getEventId(), 2);
+
+		rabbitTemplate.convertAndSend(
+				NotificationRabbitConfig.VIDEO_EVENT_EXCHANGE,
+				NotificationRabbitConfig.VIDEO_CREATED_ROUTING_KEY,
+				new VideoCreatedEvent(
+						outboxEvent.getEventId(),
+						outboxEvent.getVideoId(),
+						outboxEvent.getCreatorId(),
+						outboxEvent.getVideoTitle(),
+						outboxEvent.getOccurredAt()
+				)
+		);
+		awaitNotificationCount(outboxEvent.getEventId(), 2);
 	}
 
 	@Test
@@ -218,5 +291,15 @@ class RabbitmqNotificationApplicationTests {
 		JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
 		long memberId = json.path("data").path("id").asLong();
 		return memberId;
+	}
+
+	private void awaitNotificationCount(String eventId, long expectedCount) throws InterruptedException {
+		for (int attempt = 0; attempt < 50; attempt++) {
+			if (notificationRepository.countByEventId(eventId) == expectedCount) {
+				return;
+			}
+			Thread.sleep(100);
+		}
+		assertEquals(expectedCount, notificationRepository.countByEventId(eventId));
 	}
 }
