@@ -22,9 +22,12 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -149,6 +152,61 @@ class RabbitmqNotificationApplicationTests {
 		Member member = Member.create("member");
 
 		assertThrows(IllegalArgumentException.class, () -> Subscription.create(member, member));
+	}
+
+	@Test
+	void subscriptionCanBeCreatedAndCancelledThroughApi() throws Exception {
+		long subscriberId = createMember("subscriber");
+		long creatorId = createMember("creator");
+		String subscriptionPath = "/members/%d/subscriptions/%d".formatted(subscriberId, creatorId);
+
+		mockMvc.perform(post(subscriptionPath))
+				.andExpect(status().isCreated())
+				.andExpect(header().string("Location", subscriptionPath))
+				.andExpect(jsonPath("$.subscriberId").value(subscriberId))
+				.andExpect(jsonPath("$.creatorId").value(creatorId));
+
+		mockMvc.perform(delete(subscriptionPath))
+				.andExpect(status().isNoContent());
+
+		assertTrue(subscriptionRepository.findBySubscriberIdAndCreatorId(subscriberId, creatorId).isEmpty());
+	}
+
+	@Test
+	void repeatedSubscriptionAndCancellationAreIdempotent() throws Exception {
+		long subscriberId = createMember("subscriber");
+		long creatorId = createMember("creator");
+		String subscriptionPath = "/members/%d/subscriptions/%d".formatted(subscriberId, creatorId);
+
+		mockMvc.perform(post(subscriptionPath))
+				.andExpect(status().isCreated());
+
+		mockMvc.perform(post(subscriptionPath))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.subscriberId").value(subscriberId))
+				.andExpect(jsonPath("$.creatorId").value(creatorId));
+
+		assertEquals(1, subscriptionRepository.countBySubscriberIdAndCreatorId(subscriberId, creatorId));
+
+		mockMvc.perform(delete(subscriptionPath))
+				.andExpect(status().isNoContent());
+
+		mockMvc.perform(delete(subscriptionPath))
+				.andExpect(status().isNoContent());
+	}
+
+	@Test
+	void invalidSubscriptionTargetsReturnClientErrors() throws Exception {
+		long memberId = createMember("member");
+
+		mockMvc.perform(post("/members/{subscriberId}/subscriptions/{creatorId}", memberId, memberId))
+				.andExpect(status().isBadRequest());
+
+		mockMvc.perform(post("/members/{subscriberId}/subscriptions/{creatorId}", 999L, memberId))
+				.andExpect(status().isNotFound());
+
+		mockMvc.perform(delete("/members/{subscriberId}/subscriptions/{creatorId}", memberId, 999L))
+				.andExpect(status().isNotFound());
 	}
 
 	private long createMember(String name) throws Exception {
