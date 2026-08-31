@@ -1,5 +1,5 @@
 // 동영상 서비스 처리 결과를 전달하는 DTO.
-package dev.backend.rabbitmq_notification.dto.video;
+package dev.backend.rabbitmq_notification.dto;
 
 import java.time.LocalDateTime;
 

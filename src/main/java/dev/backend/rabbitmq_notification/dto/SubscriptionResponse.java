@@ -1,5 +1,5 @@
 // 구독 HTTP 응답 본문을 표현하는 DTO.
-package dev.backend.rabbitmq_notification.dto.subscription;
+package dev.backend.rabbitmq_notification.dto;
 
 public record SubscriptionResponse(Long id, Long subscriberId, Long creatorId) {
 

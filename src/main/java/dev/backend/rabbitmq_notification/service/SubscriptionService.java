@@ -3,7 +3,7 @@ package dev.backend.rabbitmq_notification.service;
 
 import dev.backend.rabbitmq_notification.domain.Member;
 import dev.backend.rabbitmq_notification.domain.Subscription;
-import dev.backend.rabbitmq_notification.dto.subscription.SubscriptionServiceResult;
+import dev.backend.rabbitmq_notification.dto.SubscriptionServiceResult;
 import dev.backend.rabbitmq_notification.repository.MemberRepository;
 import dev.backend.rabbitmq_notification.repository.SubscriptionRepository;
 import org.springframework.http.HttpStatus;

@@ -1,5 +1,5 @@
 // 회원 HTTP 응답 본문을 표현하는 DTO.
-package dev.backend.rabbitmq_notification.dto.member;
+package dev.backend.rabbitmq_notification.dto;
 
 import java.time.LocalDateTime;
 

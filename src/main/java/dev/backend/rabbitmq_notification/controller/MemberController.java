@@ -1,10 +1,10 @@
 // 회원 생성과 조회 HTTP 요청을 처리하는 Controller.
 package dev.backend.rabbitmq_notification.controller;
 
-import dev.backend.rabbitmq_notification.dto.common.ApiResponse;
-import dev.backend.rabbitmq_notification.dto.member.CreateMemberRequest;
-import dev.backend.rabbitmq_notification.dto.member.MemberResponse;
-import dev.backend.rabbitmq_notification.dto.member.MemberServiceResult;
+import dev.backend.rabbitmq_notification.dto.ApiResponse;
+import dev.backend.rabbitmq_notification.dto.CreateMemberRequest;
+import dev.backend.rabbitmq_notification.dto.MemberResponse;
+import dev.backend.rabbitmq_notification.dto.MemberServiceResult;
 import dev.backend.rabbitmq_notification.service.MemberService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

@@ -2,7 +2,7 @@
 package dev.backend.rabbitmq_notification.service;
 
 import dev.backend.rabbitmq_notification.domain.Member;
-import dev.backend.rabbitmq_notification.dto.member.MemberServiceResult;
+import dev.backend.rabbitmq_notification.dto.MemberServiceResult;
 import dev.backend.rabbitmq_notification.repository.MemberRepository;
 import java.util.List;
 import org.springframework.http.HttpStatus;

@@ -1,9 +1,9 @@
 // 구독 생성과 취소 HTTP 요청을 처리하는 Controller.
 package dev.backend.rabbitmq_notification.controller;
 
-import dev.backend.rabbitmq_notification.dto.common.ApiResponse;
-import dev.backend.rabbitmq_notification.dto.subscription.SubscriptionResponse;
-import dev.backend.rabbitmq_notification.dto.subscription.SubscriptionServiceResult;
+import dev.backend.rabbitmq_notification.dto.ApiResponse;
+import dev.backend.rabbitmq_notification.dto.SubscriptionResponse;
+import dev.backend.rabbitmq_notification.dto.SubscriptionServiceResult;
 import dev.backend.rabbitmq_notification.service.SubscriptionService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;

@@ -3,7 +3,7 @@ package dev.backend.rabbitmq_notification.service;
 
 import dev.backend.rabbitmq_notification.domain.Member;
 import dev.backend.rabbitmq_notification.domain.Video;
-import dev.backend.rabbitmq_notification.dto.video.VideoServiceResult;
+import dev.backend.rabbitmq_notification.dto.VideoServiceResult;
 import dev.backend.rabbitmq_notification.repository.MemberRepository;
 import dev.backend.rabbitmq_notification.repository.VideoRepository;
 import org.springframework.http.HttpStatus;

@@ -1,10 +1,10 @@
 // 동영상 생성과 단건 조회 HTTP 요청을 처리하는 Controller.
 package dev.backend.rabbitmq_notification.controller;
 
-import dev.backend.rabbitmq_notification.dto.common.ApiResponse;
-import dev.backend.rabbitmq_notification.dto.video.CreateVideoRequest;
-import dev.backend.rabbitmq_notification.dto.video.VideoResponse;
-import dev.backend.rabbitmq_notification.dto.video.VideoServiceResult;
+import dev.backend.rabbitmq_notification.dto.ApiResponse;
+import dev.backend.rabbitmq_notification.dto.CreateVideoRequest;
+import dev.backend.rabbitmq_notification.dto.VideoResponse;
+import dev.backend.rabbitmq_notification.dto.VideoServiceResult;
 import dev.backend.rabbitmq_notification.service.VideoService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
