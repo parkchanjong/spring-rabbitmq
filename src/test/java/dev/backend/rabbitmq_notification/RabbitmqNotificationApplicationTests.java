@@ -67,34 +67,36 @@ class RabbitmqNotificationApplicationTests {
 
 		mockMvc.perform(get("/members/{id}", memberId))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.id").value(memberId))
-				.andExpect(jsonPath("$.name").value("chan"))
-				.andExpect(jsonPath("$.createdAt").exists());
+				.andExpect(jsonPath("$.data.id").value(memberId))
+				.andExpect(jsonPath("$.data.name").value("chan"))
+				.andExpect(jsonPath("$.data.createdAt").exists());
 
 		mockMvc.perform(get("/members"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[*].id", hasItem((int) memberId)));
+				.andExpect(jsonPath("$.data[*].id", hasItem((int) memberId)));
 	}
 
 	@Test
 	void videoCanBeCreatedAndRetrieved() throws Exception {
 		long memberId = createMember("chan");
-		String response = mockMvc.perform(post("/videos")
+		var result = mockMvc.perform(post("/videos")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"memberId": %d, "title": "Spring RabbitMQ", "description": "intro"}
 								""".formatted(memberId)))
 				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.memberId").value(memberId))
-				.andExpect(jsonPath("$.viewCount").value(0))
-				.andExpect(jsonPath("$.likeCount").value(0))
-				.andReturn().getResponse().getContentAsString();
-		long videoId = objectMapper.readTree(response).path("id").asLong();
+				.andExpect(jsonPath("$.data.memberId").value(memberId))
+				.andExpect(jsonPath("$.data.viewCount").value(0))
+				.andExpect(jsonPath("$.data.likeCount").value(0))
+				.andReturn();
+		String response = result.getResponse().getContentAsString();
+		long videoId = objectMapper.readTree(response).path("data").path("id").asLong();
+		assertEquals("/videos/" + videoId, result.getResponse().getHeader("Location"));
 
 		mockMvc.perform(get("/videos/{id}", videoId))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.id").value(videoId))
-				.andExpect(jsonPath("$.title").value("Spring RabbitMQ"));
+				.andExpect(jsonPath("$.data.id").value(videoId))
+				.andExpect(jsonPath("$.data.title").value("Spring RabbitMQ"));
 	}
 
 	@Test
@@ -163,8 +165,8 @@ class RabbitmqNotificationApplicationTests {
 		mockMvc.perform(post(subscriptionPath))
 				.andExpect(status().isCreated())
 				.andExpect(header().string("Location", subscriptionPath))
-				.andExpect(jsonPath("$.subscriberId").value(subscriberId))
-				.andExpect(jsonPath("$.creatorId").value(creatorId));
+				.andExpect(jsonPath("$.data.subscriberId").value(subscriberId))
+				.andExpect(jsonPath("$.data.creatorId").value(creatorId));
 
 		mockMvc.perform(delete(subscriptionPath))
 				.andExpect(status().isNoContent());
@@ -183,8 +185,8 @@ class RabbitmqNotificationApplicationTests {
 
 		mockMvc.perform(post(subscriptionPath))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.subscriberId").value(subscriberId))
-				.andExpect(jsonPath("$.creatorId").value(creatorId));
+				.andExpect(jsonPath("$.data.subscriberId").value(subscriberId))
+				.andExpect(jsonPath("$.data.creatorId").value(creatorId));
 
 		assertEquals(1, subscriptionRepository.countBySubscriberIdAndCreatorId(subscriberId, creatorId));
 
@@ -210,12 +212,14 @@ class RabbitmqNotificationApplicationTests {
 	}
 
 	private long createMember(String name) throws Exception {
-		String response = mockMvc.perform(post("/members")
+		var result = mockMvc.perform(post("/members")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"name\": \"%s\"}".formatted(name)))
 				.andExpect(status().isCreated())
-				.andReturn().getResponse().getContentAsString();
-		JsonNode json = objectMapper.readTree(response);
-		return json.path("id").asLong();
+				.andReturn();
+		JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+		long memberId = json.path("data").path("id").asLong();
+		assertEquals("/members/" + memberId, result.getResponse().getHeader("Location"));
+		return memberId;
 	}
 }
