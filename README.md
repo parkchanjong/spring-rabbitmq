@@ -40,7 +40,7 @@ http://localhost:8080/actuator/health
 http://localhost:8080/actuator/prometheus
 ```
 
-Prometheus의 Status > Targets에서 `rabbitmq-notification` 대상이 `UP`인지 확인합니다. Grafana는 시작 시 Prometheus 데이터 소스를 자동으로 등록합니다.
+Prometheus의 Status > Targets에서 `rabbitmq-notification`과 `rabbitmq` 대상이 `UP`인지 확인합니다. Grafana는 시작 시 Prometheus 데이터 소스와 `RabbitMQ Notification` 폴더의 `RabbitMQ Notification Overview` 대시보드를 자동으로 등록합니다. 이 대시보드에서 애플리케이션 HTTP·JVM·HikariCP 지표와 `video.notification`, `video.notification.dlq`의 적재량·소비자 수·처리율을 확인할 수 있습니다.
 
 ## 비디오 생성 흐름
 
