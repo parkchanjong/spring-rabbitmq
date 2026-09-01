@@ -71,7 +71,7 @@ k6 run k6/video-create.js
 시드는 크리에이터 ID `1`과 구독자 1,000명, 구독 관계 1,000건을 생성합니다. 이미 데이터가 있는 DB에는 실행하지 말고, 원격 환경처럼 크리에이터 ID가 다를 때는 `CREATOR_ID`를 지정합니다.
 
 ```bash
-BASE_URL=http://example.com:8080 CREATOR_ID=42 k6 run k6/video-create.js
+K6_WEB_DASHBOARD=true CREATOR_ID=42 k6 run k6/video-create.js
 ```
 
 스크립트는 30 VU가 1분 동안 비디오를 생성하며, 비디오 생성 요청의 실패율 1% 미만과 p95 150ms 미만을 통과 기준으로 검사합니다. 실행마다 비디오와 알림 데이터가 추가됩니다.
