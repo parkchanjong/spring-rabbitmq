@@ -61,14 +61,13 @@ Outbox 발행은 RabbitMQ publisher confirm을 받은 뒤 완료 처리하므로
 
 ## k6 부하 테스트
 
-애플리케이션과 로컬 인프라를 실행한 뒤, 빈 로컬 MySQL DB에 시드 데이터를 주입하고 k6를 실행합니다.
+애플리케이션과 로컬 인프라를 실행한 뒤 k6를 실행합니다. 스크립트는 실행 전 크리에이터 1명, 구독자 1,000명, 구독 관계 1,000건을 API로 생성합니다.
 
 ```bash
-docker compose exec -T mysql mysql --user="${MYSQL_USERNAME:-notification}" --password="${MYSQL_PASSWORD:-notification}" "${MYSQL_DATABASE:-rabbitmq_notification}" < k6/video-create-data.sql
 k6 run k6/video-create.js
 ```
 
-시드는 크리에이터 ID `1`과 구독자 1,000명, 구독 관계 1,000건을 생성합니다. 이미 데이터가 있는 DB에는 실행하지 말고, 원격 환경처럼 크리에이터 ID가 다를 때는 `CREATOR_ID`를 지정합니다.
+각 실행은 새 시드 데이터와 비디오·알림 데이터를 추가합니다. 원격 환경처럼 이미 준비된 크리에이터를 사용할 때는 `CREATOR_ID`를 지정하면 자동 시드를 건너뜁니다.
 
 ```bash
 K6_WEB_DASHBOARD=true CREATOR_ID=42 k6 run k6/video-create.js
