@@ -5,6 +5,7 @@ import org.aopalliance.aop.Advice;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -16,10 +17,14 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
 @EnableScheduling
 public class NotificationRabbitConfig {
+
+	private static final Logger log = LoggerFactory.getLogger(NotificationRabbitConfig.class);
 
 	public static final String VIDEO_EVENT_EXCHANGE = "video.events";
 	public static final String VIDEO_CREATED_ROUTING_KEY = "video.created";
@@ -80,7 +85,17 @@ public class NotificationRabbitConfig {
 				rabbitTemplate,
 				VIDEO_EVENT_DLX,
 				VIDEO_NOTIFICATION_DLQ_ROUTING_KEY
-		);
+		) {
+			@Override
+			public void recover(Message message, Throwable cause) {
+				log.error(
+						"비디오 알림 재시도가 소진되어 DLQ로 이동합니다. messageId={}",
+						message.getMessageProperties().getMessageId(),
+						cause
+				);
+				super.recover(message, cause);
+			}
+		};
 		Advice retryInterceptor = RetryInterceptorBuilder.stateless()
 				.maxRetries(2)
 				.backOffOptions(1_000, 2, 4_000)
